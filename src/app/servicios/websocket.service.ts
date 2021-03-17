@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
 import { map } from 'rxjs/operators';
 import { Usuario } from '../clases/usuario';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { Usuario } from '../clases/usuario';
 export class WebsocketService {
   public socketStatus = false;
   public usuario:Usuario = null;
-  constructor(private socket: Socket) {
+  constructor(private socket: Socket, private router:Router ) {
     this.cargarStorage();
     this.chequearStatus();
   }
@@ -17,7 +18,9 @@ export class WebsocketService {
   chequearStatus() {
     this.socket.on('connect',()=>{
       this.socketStatus = true;
+      // esto es para que si por ejemplo guardamos un cambio en el backend o se baja y se sube el sitio, no se pierdan los datos de la persona que esta logueada
       console.log('se conecto el socket');
+      this.cargarStorage();
     });
     this.socket.on('disconnect',()=>{
       this.socketStatus = false;
@@ -44,6 +47,15 @@ export class WebsocketService {
       } );
     });
   }
+
+  logout(){
+    // cerrar sesion del socket
+    this.usuario = null;
+    localStorage.removeItem('usuario');
+    this.emit('configurar-usuario', {nombre:'Sin-nombre'},()=>{});
+    this.router.navigateByUrl('/login');
+  }
+
   guardarStorage() {
     localStorage.setItem('usuario', JSON.stringify(this.usuario));
   }
